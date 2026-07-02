@@ -1,0 +1,76 @@
+{
+  "info": {
+    "name": "Product Sync Engine - Visualez",
+    "_postman_id": "a1b2c3d4-visualez-sync",
+    "description": "Collection for testing Product Sync Engine APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Sync - Create Product",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[{\"product_code\":\"P1001\",\"price\":100,\"stock\":50,\"updated_at\":\"2026-07-02 10:00:00\",\"product_name\":\"Sample Product\",\"category\":\"Default\",\"status\":\"Active\"}]"
+        },
+        "url": { "raw": "http://127.0.0.1:8000/api/sync-products", "protocol": "http", "host": ["127.0.0.1"], "port": "8000", "path": ["api","sync-products"] }
+      }
+    },
+    {
+      "name": "Sync - Repeat Same Product",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "[{\"product_code\":\"P1001\",\"price\":100,\"stock\":50,\"updated_at\":\"2026-07-02 10:00:00\"}]" },
+        "url": { "raw": "http://127.0.0.1:8000/api/sync-products", "protocol": "http", "host": ["127.0.0.1"], "port": "8000", "path": ["api","sync-products"] }
+      }
+    },
+    {
+      "name": "Sync - Negative Stock (Fail)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "[{\"product_code\":\"P1002\",\"price\":10,\"stock\":-10,\"updated_at\":\"2026-07-02 11:00:00\"}]" },
+        "url": { "raw": "http://127.0.0.1:8000/api/sync-products", "protocol": "http", "host": ["127.0.0.1"], "port": "8000", "path": ["api","sync-products"] }
+      }
+    },
+    {
+      "name": "Sync - Race Update (older)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "[{\"product_code\":\"P1003\",\"price\":50,\"stock\":10,\"updated_at\":\"2026-07-02 12:00:00\",\"product_name\":\"Race Product\",\"category\":\"Race\"}]" },
+        "url": { "raw": "http://127.0.0.1:8000/api/sync-products", "protocol": "http", "host": ["127.0.0.1"], "port": "8000", "path": ["api","sync-products"] }
+      }
+    },
+    {
+      "name": "Sync - Race Update (newer)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "[{\"product_code\":\"P1003\",\"price\":60,\"stock\":9,\"updated_at\":\"2026-07-02 12:00:01\",\"product_name\":\"Race Product v2\",\"category\":\"Race\"}]" },
+        "url": { "raw": "http://127.0.0.1:8000/api/sync-products", "protocol": "http", "host": ["127.0.0.1"], "port": "8000", "path": ["api","sync-products"] }
+      }
+    },
+    {
+      "name": "Get Products (search)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "http://127.0.0.1:8000/api/products?product_code=P1001&per_page=10", "protocol": "http", "host": ["127.0.0.1"], "port": "8000", "path": ["api","products"], "query": [ { "key": "product_code", "value": "P1001" }, { "key": "per_page", "value": "10" } ] }
+      }
+    },
+    {
+      "name": "Get Sync Dashboard",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "http://127.0.0.1:8000/api/sync-dashboard", "protocol": "http", "host": ["127.0.0.1"], "port": "8000", "path": ["api","sync-dashboard"] }
+      }
+    }
+  ]
+}

@@ -27,33 +27,158 @@ Laravel has the most extensive and thorough [documentation](https://laravel.com/
 
 If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
-## Laravel Sponsors
+# Product Sync Engine
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+This repository contains a Laravel application implementing a product sync engine for ERP-to-website/mobile synchronization with MySQL.
 
-### Premium Partners
+## Quick Start
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+git clone https://github.com/Rohit-pawar52/VisualEz.git
+cd VisualEz
+composer install
+cp .env.example .env
+php artisan key:generate
 
-## Contributing
+# Configure MySQL in .env (DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD)
+# Create database: mysql -u root -p -e "CREATE DATABASE visualez CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+php artisan migrate --force
+php artisan serve
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Visit `http://127.0.0.1:8000/api/sync-dashboard` to verify the setup.
 
-## Code of Conduct
+## Setup
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+1. Copy `.env.example` to `.env`.
+2. Set `DB_CONNECTION=sqlite`.
+3. Create the SQLite database file if needed:
+   - `php -r "file_exists('database/database.sqlite') || touch('database/database.sqlite');"`
+4. Install dependencies:
+   - `composer install`
+5. Generate app key:
+   - `php artisan key:generate`
+6. Run migrations:
+   - `php artisan migrate --force`
 
-## Security Vulnerabilities
+## APIs
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 1. Sync Products
 
-## License
+`POST /api/sync-products`
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Request body:
+
+```json
+[
+  {
+    "product_code": "P1001",
+    "price": 100,
+    "stock": 50,
+    "updated_at": "2026-06-22 10:00:00",
+    "product_name": "Product Name",
+    "category": "Category Name",
+    "status": "Active"
+  }
+]
+```
+
+Behavior:
+
+- Creates a new product if `product_code` does not exist.
+- Updates only when incoming `updated_at` is newer.
+- Rejects negative stock.
+- Uses transaction and `lockForUpdate()` to avoid race conditions.
+- Records sync activity in `product_sync_logs`.
+
+### 2. Product Search
+
+`GET /api/products`
+
+Query parameters:
+
+- `product_code` - partial or full product code match
+- `product_name` - partial or full product name match
+- `category` - category filter
+- `per_page` - pagination size
+
+Returns paginated product data.
+
+### 3. Sync Dashboard
+
+`GET /api/sync-dashboard`
+
+Returns:
+
+- `total_products`
+- `created_today`
+- `updated_today`
+- `skipped_records`
+- `failed_records`
+
+## Database design
+
+- `products`
+  - `product_code`
+  - `product_name`
+  - `category`
+  - `price`
+  - `stock`
+  - `status`
+  - `last_updated_at`
+  - timestamps
+
+- `product_sync_logs`
+  - `product_code`
+  - `action`
+  - `reason`
+  - `created_at`
+
+## Assumptions
+
+- ERP may omit optional fields; defaults will be applied.
+- Negative stock values are invalid.
+- Status values are normalized to `Active` or `Inactive`.
+- Simultaneous updates are handled using row locks and transaction retries.
+
+## Verification
+
+- `php artisan route:list`
+- `php artisan migrate --force`
+
+## Notes
+
+The project uses SQLite to keep setup lightweight and reproducible. Use `php artisan serve` to run the application locally.
+
+## Using MySQL
+
+To use MySQL instead of SQLite, update `.env` (already set to sensible defaults) and create the database, for example:
+
+```bash
+# create database (adjust user/password as needed)
+mysql -u root -p -e "CREATE DATABASE visualez CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# then run migrations
+php artisan migrate --force
+```
+
+Make sure `DB_USERNAME` and `DB_PASSWORD` in `.env` match your MySQL credentials. If migrations fail, check database connectivity and credentials.
+
+## Testing with Postman
+
+A Postman collection is included in `postman_collection.json`. Import it into Postman to test:
+- Create products
+- Test duplicate/stale updates (skipping)
+- Test negative stock (rejection)
+- Test concurrent updates
+- Search products
+- View dashboard
+
+## Project Structure
+
+- `app/Http/Controllers/ProductSyncController.php` - Core sync logic
+- `app/Models/Product.php` - Product model
+- `app/Models/ProductSyncLog.php` - Sync log model
+- `database/migrations/` - Database schema
+- `routes/api.php` - API endpoint definitions
+- `postman_collection.json` - Postman test collection

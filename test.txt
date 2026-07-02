@@ -1,0 +1,94 @@
+Assessment Task: Product Catalog Sync &amp; Conflict Resolution
+Engine
+Background
+We have three systems:
+1. ERP System
+2. Website (Laravel)
+3. Mobile App
+Product data comes from the ERP system through APIs.
+The challenge is that product information may be updated from multiple places and data conflicts can occur.
+Your task is to design and implement a Product Sync Engine.
+
+Product Fields
+ Product Code (Unique)
+ Product Name
+ Category
+ Price
+ Stock
+ Status (Active/Inactive)
+ Last Updated Time
+
+Requirements
+API 1: Sync Products
+Create an API:
+POST /api/sync-products
+This API receives a list of products from ERP.
+Example:
+[ { “product_code”:“P1001”, “price”:100, “stock”:50, “updated_at”:“2026-06-22 10:00:00” }]
+
+Sync Rules
+Rule 1
+If product does not exist:
+Create new product.
+Rule 2
+If product exists:
+Update only if incoming updated_at is newer than existing record.
+Rule 3
+
+If two updates arrive simultaneously:
+System must prevent data corruption.
+Rule 4
+Maintain a sync log table.
+Track:
+ Product Code
+ Action (Create/Update/Skip)
+ Reason
+ Timestamp
+
+API 2: Product Search
+Create API with:
+ Pagination
+ Search by Product Code
+ Search by Product Name
+ Filter by Category
+
+API 3: Sync Dashboard
+Return:
+ Total Products
+ Created Today
+ Updated Today
+ Skipped Records
+ Failed Records
+
+Edge Cases
+Scenario 1
+ERP sends same product 5 times within 1 minute.
+How will you prevent unnecessary updates?
+Scenario 2
+ERP sends stock = -10
+What should happen?
+Scenario 3
+Two API requests update same product simultaneously.
+How will you prevent race conditions?
+Scenario 4
+ERP API is down.
+
+How will your system recover?
+
+Expected Deliverables
+1. Laravel Project
+2. Database Design
+3. API Documentation
+4. Explanation of architecture decisions
+5. Assumptions made
+
+Evaluation Criteria
+ Database Design
+ API Design
+ Error Handling
+ Transaction Usage
+ Race Condition Handling
+ Code Quality
+ Problem Solving Approach
+ Logging Strategy
+ Performance Considerations
