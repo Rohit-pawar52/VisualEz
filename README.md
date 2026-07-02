@@ -51,9 +51,17 @@ Visit `http://127.0.0.1:8000/api/sync-dashboard` to verify the setup.
 ## Setup
 
 1. Copy `.env.example` to `.env`.
-2. Set `DB_CONNECTION=sqlite`.
-3. Create the SQLite database file if needed:
-   - `php -r "file_exists('database/database.sqlite') || touch('database/database.sqlite');"`
+2. Configure MySQL database:
+   ```bash
+   # Create database (adjust user/password as needed)
+   mysql -u root -p -e "CREATE DATABASE visualez CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+   ```
+3. Update `.env` with your MySQL credentials:
+   - `DB_HOST=127.0.0.1`
+   - `DB_PORT=3306`
+   - `DB_DATABASE=visualez`
+   - `DB_USERNAME=root`
+   - `DB_PASSWORD=your_password` (if set)
 4. Install dependencies:
    - `composer install`
 5. Generate app key:
@@ -148,21 +156,7 @@ Returns:
 
 ## Notes
 
-The project uses SQLite to keep setup lightweight and reproducible. Use `php artisan serve` to run the application locally.
-
-## Using MySQL
-
-To use MySQL instead of SQLite, update `.env` (already set to sensible defaults) and create the database, for example:
-
-```bash
-# create database (adjust user/password as needed)
-mysql -u root -p -e "CREATE DATABASE visualez CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-# then run migrations
-php artisan migrate --force
-```
-
-Make sure `DB_USERNAME` and `DB_PASSWORD` in `.env` match your MySQL credentials. If migrations fail, check database connectivity and credentials.
+The project uses MySQL for data persistence. Make sure `DB_USERNAME` and `DB_PASSWORD` in `.env` match your MySQL credentials. If migrations fail, check database connectivity and credentials. Use `php artisan serve` to run the application locally.
 
 ## Testing with Postman
 
