@@ -69,6 +69,70 @@ Visit `http://127.0.0.1:8000/api/sync-dashboard` to verify the setup.
 6. Run migrations:
    - `php artisan migrate --force`
 
+## Authentication with Sanctum
+
+This project now supports API authentication using Laravel Sanctum.
+
+### Register a new user
+
+`POST /api/register`
+
+Request body:
+
+```json
+{
+  "name": "HR Manager",
+  "email": "hr.manager@example.com",
+  "password": "password123",
+  "password_confirmation": "password123"
+}
+```
+
+Response:
+
+```json
+{
+  "message": "Registration successful",
+  "token": "<sanctum-token>",
+  "user": {
+    "id": 1,
+    "name": "HR Manager",
+    "email": "hr.manager@example.com"
+  }
+}
+```
+
+### Login
+
+`POST /api/login`
+
+Request body:
+
+```json
+{
+  "email": "hr.manager@example.com",
+  "password": "password123"
+}
+```
+
+Response:
+
+```json
+{
+  "message": "Login successful",
+  "token": "<sanctum-token>",
+  "user": {
+    "id": 1,
+    "name": "HR Manager",
+    "email": "hr.manager@example.com"
+  }
+}
+```
+
+Use the returned token in the `Authorization: Bearer <token>` header for protected endpoints.
+
+This means HR and managers can create their own accounts without needing a developer to create users manually in the database.
+
 ## APIs
 
 ### 1. Sync Products

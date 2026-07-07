@@ -4,14 +4,61 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\ProductSyncLog;
+use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
+
 
 class ProductSyncController extends Controller
 {
+
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if (!Auth::attempt($credentials)) {
+            return response()->json([
+                'message' => 'Invalid credentials'
+            ], 401);
+        }
+
+        return $this->respondWithToken(Auth::user());
+    }
+
+    public function register(Request $request)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => $data['password'],
+        ]);
+
+        return $this->respondWithToken($user, 201);
+    }
+
+    private function respondWithToken(User $user, int $status = 200)
+    {
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        return response()->json([
+            'message' => $status === 201 ? 'Registration successful' : 'Login successful',
+            'token' => $token,
+            'user' => $user,
+        ], $status);
+    }
     public function syncProducts(Request $request)
     {
         $items = $request->all();
@@ -52,7 +99,7 @@ class ProductSyncController extends Controller
 
             try {
                 $result = $this->processItem($item);
-                $actionKey = match(strtolower($result['action'])) {
+                $actionKey = match (strtolower($result['action'])) {
                     'create' => 'created',
                     'update' => 'updated',
                     'skip' => 'skipped',
@@ -109,7 +156,7 @@ class ProductSyncController extends Controller
         return DB::transaction(function () use ($item, $incomingUpdated) {
             $product = Product::where('product_code', $item['product_code'])->lockForUpdate()->first();
 
-            if (! $product) {
+            if (!$product) {
                 $product = Product::create($this->buildPayload($item, $incomingUpdated));
                 $this->logSync($product->product_code, 'Create', 'created');
 
